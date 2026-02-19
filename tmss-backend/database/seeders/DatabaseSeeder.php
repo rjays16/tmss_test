@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             LocaleSeeder::class,
             TagSeeder::class,
+            TranslationSeeder::class,
         ]);
 
         User::factory()->create([

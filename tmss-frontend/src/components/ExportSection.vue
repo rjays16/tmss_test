@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import api from '../services/api'
 
 defineProps({
   tags: {
@@ -10,14 +11,32 @@ defineProps({
 
 const selectedLocales = ref(['en', 'fr', 'es'])
 const selectedTag = ref('')
+const exporting = ref(false)
+const exportError = ref(null)
 
-const emit = defineEmits(['export'])
-
-const exportJson = () => {
-  emit('export', {
-    locales: selectedLocales.value,
-    tag: selectedTag.value
-  })
+const exportJson = async () => {
+  try {
+    exporting.value = true
+    exportError.value = null
+    
+    const data = await api.exportTranslations({
+      locales: selectedLocales.value.join(','),
+      tag: selectedTag.value
+    })
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `translations_${new Date().toISOString().split('T')[0]}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    exportError.value = e.message
+    console.error('Export error:', e)
+  } finally {
+    exporting.value = false
+  }
 }
 </script>
 
@@ -49,9 +68,11 @@ const exportJson = () => {
           </select>
         </div>
       </div>
-      <button class="btn btn-primary btn-large" @click="exportJson">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Export JSON
+      <div v-if="exportError" class="error-message">{{ exportError }}</div>
+      <button class="btn btn-primary btn-large" @click="exportJson" :disabled="exporting">
+        <svg v-if="!exporting" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        {{ exporting ? 'Exporting...' : 'Export JSON' }}
       </button>
     </div>
   </div>
@@ -61,6 +82,24 @@ const exportJson = () => {
 .export-section {
   display: flex;
   justify-content: center;
+}
+
+.error-message {
+  background: #fef2f2;
+  color: #ef4444;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .export-card {

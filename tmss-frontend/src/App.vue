@@ -1,36 +1,110 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import DefaultLayout from './layouts/DefaultLayout.vue'
 import HeaderSection from './components/HeaderSection.vue'
 import TranslationsSection from './components/TranslationsSection.vue'
 import LocalesSection from './components/LocalesSection.vue'
 import TagsSection from './components/TagsSection.vue'
 import ExportSection from './components/ExportSection.vue'
+import api from './services/api'
 
 const activeTab = ref('translations')
+const loading = ref(false)
+const error = ref(null)
 
-const translations = ref([
-  { id: 1, key: 'welcome_message', en: 'Welcome', fr: 'Bienvenue', es: 'Bienvenido', tags: ['web', 'home'] },
-  { id: 2, key: 'login_button', en: 'Login', fr: 'Connexion', es: 'Iniciar sesión', tags: ['web', 'auth'] },
-  { id: 3, key: 'logout_button', en: 'Logout', fr: 'Déconnexion', es: 'Cerrar sesión', tags: ['web', 'auth'] },
-  { id: 4, key: 'save_button', en: 'Save', fr: 'Enregistrer', es: 'Guardar', tags: ['mobile', 'common'] },
-  { id: 5, key: 'cancel_button', en: 'Cancel', fr: 'Annuler', es: 'Cancelar', tags: ['mobile', 'common'] },
-])
+const translations = ref([])
+const locales = ref([])
+const tags = ref([])
 
-const locales = ref([
-  { id: 1, code: 'en', name: 'English', is_active: true },
-  { id: 2, code: 'fr', name: 'French', is_active: true },
-  { id: 3, code: 'es', name: 'Spanish', is_active: true },
-])
+const fetchTranslations = async () => {
+  try {
+    loading.value = true
+    const response = await api.getTranslations()
+    const allTranslations = response.data
+    
+    const grouped = {}
+    for (const t of allTranslations) {
+      const key = t.key
+      if (!grouped[key]) {
+        grouped[key] = {
+          id: t.id,
+          key: key,
+          en: '',
+          fr: '',
+          es: '',
+          de: '',
+          tags: []
+        }
+      }
+      const lang = t.locale?.code || t.locale
+      if (lang && ['en', 'fr', 'es', 'de'].includes(lang)) {
+        grouped[key][lang] = t.value
+      }
+      if (t.tags) {
+        for (const tag of t.tags) {
+          if (!grouped[key].tags.includes(tag.name)) {
+            grouped[key].tags.push(tag.name)
+          }
+        }
+      }
+    }
+    translations.value = Object.values(grouped)
+  } catch (e) {
+    error.value = e.message
+    console.error('Error fetching translations:', e)
+  } finally {
+    loading.value = false
+  }
+}
 
-const tags = ref([
-  { id: 1, name: 'web', color: '#3B82F6' },
-  { id: 2, name: 'mobile', color: '#10B981' },
-  { id: 3, name: 'desktop', color: '#8B5CF6' },
-  { id: 4, name: 'auth', color: '#F59E0B' },
-  { id: 5, name: 'home', color: '#EF4444' },
-  { id: 6, name: 'common', color: '#6B7280' },
-])
+const fetchLocales = async () => {
+  try {
+    loading.value = true
+    const response = await api.getLocales()
+    locales.value = response.data.map(l => ({
+      id: l.id,
+      code: l.code,
+      name: l.name,
+      is_active: l.is_active
+    }))
+  } catch (e) {
+    error.value = e.message
+    console.error('Error fetching locales:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+const fetchTags = async () => {
+  try {
+    loading.value = true
+    const response = await api.getTags()
+    tags.value = response.data.map(t => ({
+      id: t.id,
+      name: t.name,
+      color: t.color
+    }))
+  } catch (e) {
+    error.value = e.message
+    console.error('Error fetching tags:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+const fetchData = () => {
+  if (activeTab.value === 'translations') fetchTranslations()
+  if (activeTab.value === 'locales') fetchLocales()
+  if (activeTab.value === 'tags') fetchTags()
+}
+
+onMounted(() => {
+  fetchData()
+})
+
+watch(activeTab, () => {
+  fetchData()
+})
 
 const getTitle = () => {
   return activeTab.value.charAt(0).toUpperCase() + activeTab.value.slice(1)

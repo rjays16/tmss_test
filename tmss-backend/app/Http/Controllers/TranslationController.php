@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Translation;
+use App\Models\Locale;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -24,7 +25,14 @@ class TranslationController extends Controller
             'tag_ids.*' => 'exists:tags,id',
         ]);
 
-        $translation = Translation::create($validated);
+        $locale = Locale::findOrFail($validated['locale_id']);
+
+        $translation = Translation::create([
+            'key' => $validated['key'],
+            'value' => $validated['value'],
+            'locale_id' => $validated['locale_id'],
+            'locale' => $locale->code,
+        ]);
 
         if (!empty($validated['tag_ids'])) {
             $translation->tags()->sync($validated['tag_ids']);
@@ -53,7 +61,18 @@ class TranslationController extends Controller
             'tag_ids.*' => 'exists:tags,id',
         ]);
 
-        $translation->update($validated);
+        $updateData = [
+            'key' => $validated['key'] ?? $translation->key,
+            'value' => $validated['value'] ?? $translation->value,
+        ];
+
+        if (isset($validated['locale_id'])) {
+            $locale = Locale::findOrFail($validated['locale_id']);
+            $updateData['locale_id'] = $validated['locale_id'];
+            $updateData['locale'] = $locale->code;
+        }
+
+        $translation->update($updateData);
 
         if (isset($validated['tag_ids'])) {
             $translation->tags()->sync($validated['tag_ids']);
