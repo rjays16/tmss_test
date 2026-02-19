@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import DefaultLayout from './layouts/DefaultLayout.vue'
 import HeaderSection from './components/HeaderSection.vue'
 import TranslationsSection from './components/TranslationsSection.vue'
+import TranslationModal from './components/modals/TranslationModal.vue'
 import LocalesSection from './components/LocalesSection.vue'
 import TagsSection from './components/TagsSection.vue'
 import ExportSection from './components/ExportSection.vue'
@@ -15,6 +16,9 @@ const error = ref(null)
 const translations = ref([])
 const locales = ref([])
 const tags = ref([])
+
+const showModal = ref(false)
+const editingTranslation = ref(null)
 
 const fetchTranslations = async () => {
   try {
@@ -113,6 +117,64 @@ watch(activeTab, () => {
 const getTitle = () => {
   return activeTab.value.charAt(0).toUpperCase() + activeTab.value.slice(1)
 }
+
+const openAddModal = () => {
+  editingTranslation.value = null
+  showModal.value = true
+}
+
+const openEditModal = (translation) => {
+  editingTranslation.value = translation
+  showModal.value = true
+}
+
+const handleSaveTranslation = async (form) => {
+  try {
+    loading.value = true
+    if (editingTranslation.value) {
+      const existing = translations.value.find(t => t.key === form.key)
+      if (existing && existing.en !== form.en) {
+        await api.updateTranslation(existing.id, { value: form.en, locale_id: 1 })
+      }
+    } else {
+      const localeMap = { en: 1, fr: 2, es: 3, de: 4 }
+      for (const [lang, value] of Object.entries({ en: form.en, fr: form.fr, es: form.es, de: form.de })) {
+        if (value) {
+          await api.createTranslation({
+            key: form.key,
+            value: value,
+            locale_id: localeMap[lang],
+            tag_ids: form.tag_ids
+          })
+        }
+      }
+    }
+    showModal.value = false
+    fetchTranslations()
+  } catch (e) {
+    error.value = e.message
+    console.error('Error saving translation:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleDeleteTranslation = async (translation) => {
+  if (!confirm(`Delete translation "${translation.key}"?`)) return
+  try {
+    loading.value = true
+    const existing = translations.value.find(t => t.key === translation.key)
+    if (existing) {
+      await api.deleteTranslation(existing.id)
+    }
+    fetchTranslations()
+  } catch (e) {
+    error.value = e.message
+    console.error('Error deleting translation:', e)
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>
@@ -122,7 +184,7 @@ const getTitle = () => {
     <main class="main-content">
       <HeaderSection :title="getTitle()">
         <template #actions>
-          <button class="btn btn-primary" v-if="activeTab === 'translations'">
+          <button class="btn btn-primary" v-if="activeTab === 'translations'" @click="openAddModal">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Translation
           </button>
@@ -141,6 +203,9 @@ const getTitle = () => {
         v-if="activeTab === 'translations'" 
         :translations="translations" 
         :tags="tags" 
+        @add="openAddModal"
+        @edit="openEditModal"
+        @delete="handleDeleteTranslation"
       />
       
       <LocalesSection 
@@ -156,6 +221,16 @@ const getTitle = () => {
       <ExportSection 
         v-if="activeTab === 'export'" 
         :tags="tags" 
+      />
+
+      <TranslationModal
+        :show="showModal"
+        :translation="editingTranslation"
+        :locales="locales"
+        :tags="tags"
+        :isEdit="!!editingTranslation"
+        @close="showModal = false"
+        @save="handleSaveTranslation"
       />
     </main>
   </div>
