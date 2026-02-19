@@ -19,9 +19,13 @@ const selectedTag = ref('')
 
 const filteredTranslations = computed(() => {
   return props.translations.filter(t => {
-    const matchesSearch = !searchQuery.value || 
-      t.key.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      t.en?.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const query = searchQuery.value.toLowerCase()
+    const matchesSearch = !query || 
+      t.key.toLowerCase().includes(query) ||
+      (t.en?.toLowerCase().includes(query)) ||
+      (t.fr?.toLowerCase().includes(query)) ||
+      (t.es?.toLowerCase().includes(query)) ||
+      (t.de?.toLowerCase().includes(query))
     const matchesTag = !selectedTag.value || t.tags?.includes(selectedTag.value)
     return matchesSearch && matchesTag
   })
