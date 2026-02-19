@@ -31,7 +31,7 @@ const fetchTranslations = async () => {
       const key = t.key
       if (!grouped[key]) {
         grouped[key] = {
-          id: t.id,
+          ids: [],
           key: key,
           en: '',
           fr: '',
@@ -40,6 +40,7 @@ const fetchTranslations = async () => {
           tags: []
         }
       }
+      grouped[key].ids.push(t.id)
       const lang = t.locale?.code || t.locale
       if (lang && ['en', 'fr', 'es', 'de'].includes(lang)) {
         grouped[key][lang] = t.value
@@ -133,8 +134,21 @@ const handleSaveTranslation = async (form) => {
     loading.value = true
     if (editingTranslation.value) {
       const existing = translations.value.find(t => t.key === form.key)
-      if (existing && existing.en !== form.en) {
-        await api.updateTranslation(existing.id, { value: form.en, locale_id: 1 })
+      if (existing) {
+        for (const id of existing.ids) {
+          await api.deleteTranslation(id)
+        }
+        const localeMap = { en: 1, fr: 2, es: 3, de: 4 }
+        for (const [lang, value] of Object.entries({ en: form.en, fr: form.fr, es: form.es, de: form.de })) {
+          if (value) {
+            await api.createTranslation({
+              key: form.key,
+              value: value,
+              locale_id: localeMap[lang],
+              tag_ids: form.tag_ids
+            })
+          }
+        }
       }
     } else {
       const localeMap = { en: 1, fr: 2, es: 3, de: 4 }
@@ -163,9 +177,8 @@ const handleDeleteTranslation = async (translation) => {
   if (!confirm(`Delete translation "${translation.key}"?`)) return
   try {
     loading.value = true
-    const existing = translations.value.find(t => t.key === translation.key)
-    if (existing) {
-      await api.deleteTranslation(existing.id)
+    for (const id of translation.ids) {
+      await api.deleteTranslation(id)
     }
     fetchTranslations()
   } catch (e) {
