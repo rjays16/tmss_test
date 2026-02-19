@@ -93,9 +93,13 @@ const fetchTags = async () => {
 }
 
 const fetchData = () => {
-  if (activeTab.value === 'translations') fetchTranslations()
+  if (activeTab.value === 'translations') {
+    fetchTranslations()
+    fetchTags()
+  }
   if (activeTab.value === 'locales') fetchLocales()
   if (activeTab.value === 'tags') fetchTags()
+  if (activeTab.value === 'export') fetchTags()
 }
 
 onMounted(() => {
