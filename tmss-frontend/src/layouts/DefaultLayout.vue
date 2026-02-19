@@ -54,6 +54,7 @@ defineEmits(['update:activeTab'])
   flex-direction: column;
   position: fixed;
   height: 100vh;
+  z-index: 100;
 }
 
 .logo {
@@ -68,6 +69,10 @@ defineEmits(['update:activeTab'])
 
 .logo svg {
   color: #60a5fa;
+}
+
+.logo span {
+  display: block;
 }
 
 .nav-menu {
@@ -119,21 +124,131 @@ defineEmits(['update:activeTab'])
   justify-content: center;
   color: white;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .user-details {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .user-details .name {
   color: white;
   font-weight: 600;
   font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-details .role {
   color: #94a3b8;
   font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mobile Menu Button */
+.menu-toggle {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 101;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #3b82f6;
+  border: none;
+  color: white;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 220px;
+  }
+  
+  .logo {
+    font-size: 18px;
+    padding-bottom: 24px;
+  }
+  
+  .nav-menu a {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .nav-menu a svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 16px;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar.open {
+    transform: translateY(0);
+  }
+  
+  .logo {
+    padding: 0;
+    font-size: 18px;
+    gap: 8px;
+  }
+  
+  .logo svg {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .nav-menu {
+    flex-direction: row;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .nav-menu a {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .nav-menu a svg {
+    display: none;
+  }
+  
+  .user-info {
+    display: none;
+  }
+  
+  .menu-toggle {
+    display: flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-menu a {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
 }
 </style>

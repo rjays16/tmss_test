@@ -120,6 +120,11 @@ body {
   cursor: pointer;
   border: none;
   transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn svg {
+  flex-shrink: 0;
 }
 
 .btn-primary {
@@ -139,5 +144,27 @@ body {
 
 .btn-secondary:hover {
   background: #f8fafc;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 220px;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    margin-top: 60px;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 12px;
+  }
 }
 </style>

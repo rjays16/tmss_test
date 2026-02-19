@@ -94,4 +94,48 @@ defineEmits(['edit', 'delete'])
   background: #ef4444;
   color: white;
 }
+
+@media (max-width: 768px) {
+  .tags-grid {
+    gap: 10px;
+  }
+  
+  .tag-card {
+    padding: 10px 14px;
+  }
+  
+  .tag-name {
+    font-size: 13px;
+  }
+  
+  .tag-actions {
+    margin-left: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tags-grid {
+    gap: 8px;
+  }
+  
+  .tag-card {
+    padding: 8px 12px;
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+  }
+  
+  .tag-color {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .tag-name {
+    font-size: 12px;
+  }
+  
+  .icon-btn {
+    width: 28px;
+    height: 28px;
+  }
+}
 </style>

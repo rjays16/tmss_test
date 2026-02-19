@@ -142,4 +142,33 @@ const exportJson = () => {
   padding: 14px 28px;
   font-size: 16px;
 }
+
+@media (max-width: 768px) {
+  .export-card {
+    padding: 24px;
+  }
+  
+  .export-card h3 {
+    font-size: 20px;
+  }
+  
+  .export-card p {
+    margin-bottom: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .export-card {
+    padding: 16px;
+  }
+  
+  .export-card h3 {
+    font-size: 18px;
+  }
+  
+  .btn-large {
+    width: 100%;
+    justify-content: center;
+  }
+}
 </style>

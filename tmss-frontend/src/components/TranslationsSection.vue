@@ -93,10 +93,12 @@ const getTagColor = (tagName) => {
   display: flex;
   gap: 16px;
   margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
 .search-box {
   flex: 1;
+  min-width: 200px;
   max-width: 400px;
   position: relative;
 }
@@ -221,5 +223,50 @@ const getTagColor = (tagName) => {
 .icon-btn.delete:hover {
   background: #ef4444;
   color: white;
+}
+
+@media (max-width: 768px) {
+  .filters {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .search-box {
+    max-width: 100%;
+  }
+  
+  .tag-filter {
+    width: 100%;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  .data-table {
+    min-width: 600px;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .data-table th,
+  .data-table td {
+    padding: 8px;
+    font-size: 12px;
+  }
+  
+  .key-cell {
+    font-size: 11px;
+  }
+  
+  .tag {
+    padding: 2px 6px;
+    font-size: 10px;
+  }
 }
 </style>

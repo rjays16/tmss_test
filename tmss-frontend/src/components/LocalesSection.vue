@@ -116,4 +116,25 @@ defineEmits(['edit', 'delete'])
   background: #ef4444;
   color: white;
 }
+
+@media (max-width: 768px) {
+  .cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  
+  .locale-card {
+    padding: 16px;
+  }
+  
+  .locale-code {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
