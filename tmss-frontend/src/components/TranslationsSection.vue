@@ -9,6 +9,10 @@ const props = defineProps({
   tags: {
     type: Array,
     default: () => []
+  },
+  locales: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -16,16 +20,40 @@ const emit = defineEmits(['add', 'edit', 'delete'])
 
 const searchQuery = ref('')
 const selectedTag = ref('')
+const showLanguageSelector = ref(false)
+
+const defaultLocales = ['en', 'fr', 'es', 'de']
+const availableLocales = computed(() => {
+  if (props.locales.length > 0) {
+    return props.locales.map(l => l.code)
+  }
+  return defaultLocales
+})
+
+const selectedLocales = ref([...availableLocales.value])
+
+const localeNames = {
+  en: 'English',
+  fr: 'French',
+  es: 'Spanish',
+  de: 'German',
+  it: 'Italian',
+  pt: 'Portuguese',
+  zh: 'Chinese',
+  ja: 'Japanese',
+  ko: 'Korean',
+  ar: 'Arabic'
+}
 
 const filteredTranslations = computed(() => {
+  const query = searchQuery.value.toLowerCase()
+  const searchFields = ['key', ...selectedLocales.value]
+  
   return props.translations.filter(t => {
-    const query = searchQuery.value.toLowerCase()
-    const matchesSearch = !query || 
-      t.key.toLowerCase().includes(query) ||
-      (t.en?.toLowerCase().includes(query)) ||
-      (t.fr?.toLowerCase().includes(query)) ||
-      (t.es?.toLowerCase().includes(query)) ||
-      (t.de?.toLowerCase().includes(query))
+    const matchesSearch = !query || searchFields.some(field => {
+      const value = t[field]
+      return value && value.toLowerCase().includes(query)
+    })
     const matchesTag = !selectedTag.value || t.tags?.includes(selectedTag.value)
     return matchesSearch && matchesTag
   })
@@ -34,6 +62,19 @@ const filteredTranslations = computed(() => {
 const getTagColor = (tagName) => {
   const tag = props.tags.find(t => t.name === tagName)
   return tag?.color || '#6B7280'
+}
+
+const toggleLocale = (locale) => {
+  const index = selectedLocales.value.indexOf(locale)
+  if (index === -1) {
+    selectedLocales.value.push(locale)
+  } else if (selectedLocales.value.length > 1) {
+    selectedLocales.value.splice(index, 1)
+  }
+}
+
+const isLocaleSelected = (locale) => {
+  return selectedLocales.value.includes(locale)
 }
 </script>
 
@@ -48,6 +89,24 @@ const getTagColor = (tagName) => {
         <option value="">All Tags</option>
         <option v-for="tag in tags" :key="tag.id" :value="tag.name">{{ tag.name }}</option>
       </select>
+      
+      <div class="language-selector">
+        <button class="language-toggle" @click="showLanguageSelector = !showLanguageSelector">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Languages ({{ selectedLocales.length }})
+        </button>
+        <div v-if="showLanguageSelector" class="language-dropdown">
+          <label v-for="locale in availableLocales" :key="locale" class="language-option">
+            <input 
+              type="checkbox" 
+              :checked="isLocaleSelected(locale)"
+              @change="toggleLocale(locale)"
+            >
+            <span class="locale-code">{{ locale }}</span>
+            <span class="locale-name">{{ localeNames[locale] || locale }}</span>
+          </label>
+        </div>
+      </div>
     </div>
 
     <div class="table-container">
@@ -55,9 +114,9 @@ const getTagColor = (tagName) => {
         <thead>
           <tr>
             <th>Key</th>
-            <th>English</th>
-            <th>French</th>
-            <th>Spanish</th>
+            <th v-for="locale in selectedLocales" :key="locale">
+              {{ localeNames[locale] || locale }}
+            </th>
             <th>Tags</th>
             <th>Actions</th>
           </tr>
@@ -65,9 +124,9 @@ const getTagColor = (tagName) => {
         <tbody>
           <tr v-for="t in filteredTranslations" :key="t.id">
             <td class="key-cell">{{ t.key }}</td>
-            <td>{{ t.en }}</td>
-            <td>{{ t.fr }}</td>
-            <td>{{ t.es }}</td>
+            <td v-for="locale in selectedLocales" :key="locale">
+              {{ t[locale] || '-' }}
+            </td>
             <td>
               <div class="tag-list">
                 <span v-for="tagName in t.tags" :key="tagName" class="tag" :style="{ backgroundColor: getTagColor(tagName) }">
@@ -137,6 +196,71 @@ const getTagColor = (tagName) => {
   font-size: 14px;
   background: white;
   cursor: pointer;
+}
+
+.language-selector {
+  position: relative;
+}
+
+.language-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.language-toggle:hover {
+  background: #f8fafc;
+}
+
+.language-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  z-index: 100;
+  padding: 8px;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.language-option:hover {
+  background: #f8fafc;
+}
+
+.language-option input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.language-option .locale-code {
+  font-weight: 600;
+  color: #3b82f6;
+  min-width: 30px;
+}
+
+.language-option .locale-name {
+  color: #64748b;
+  font-size: 13px;
 }
 
 .table-container {

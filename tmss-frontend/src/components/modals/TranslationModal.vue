@@ -1,37 +1,73 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 const props = defineProps({
   show: Boolean,
   translation: Object,
-  locales: Array,
-  tags: Array,
+  locales: {
+    type: Array,
+    default: () => []
+  },
+  tags: {
+    type: Array,
+    default: () => []
+  },
   isEdit: Boolean
 })
 
 const emit = defineEmits(['close', 'save'])
 
-const form = ref({
-  key: '',
-  en: '',
-  fr: '',
-  es: '',
-  de: '',
-  tag_ids: []
+const availableLocales = computed(() => {
+  if (props.locales && props.locales.length > 0) {
+    return props.locales
+  }
+  return [
+    { code: 'en', name: 'English' },
+    { code: 'fr', name: 'French' },
+    { code: 'es', name: 'Spanish' },
+    { code: 'de', name: 'German' }
+  ]
 })
+
+const getInitialForm = () => {
+  const form = {
+    key: '',
+    tag_ids: []
+  }
+  availableLocales.value.forEach(locale => {
+    form[locale.code] = ''
+  })
+  return form
+}
+
+const form = ref(getInitialForm())
 
 watch(() => props.translation, (t) => {
   if (t) {
-    form.value = {
+    const newForm = {
       key: t.key || '',
-      en: t.en || '',
-      fr: t.fr || '',
-      es: t.es || '',
-      de: t.de || '',
       tag_ids: t.tags || []
     }
+    availableLocales.value.forEach(locale => {
+      newForm[locale.code] = t[locale.code] || ''
+    })
+    form.value = newForm
+  } else {
+    form.value = getInitialForm()
   }
 }, { immediate: true })
+
+watch(() => props.show, (isVisible) => {
+  if (!isVisible) {
+    form.value = getInitialForm()
+  }
+})
+
+watch(availableLocales, () => {
+  if (!props.translation) {
+    form.value = getInitialForm()
+  }
+}, { deep: true })
 
 const handleSubmit = () => {
   emit('save', { ...form.value })
@@ -45,6 +81,14 @@ const toggleTag = (tagId) => {
     form.value.tag_ids.splice(index, 1)
   }
 }
+
+const localePairs = computed(() => {
+  const pairs = []
+  for (let i = 0; i < availableLocales.value.length; i += 2) {
+    pairs.push([availableLocales.value[i], availableLocales.value[i + 1]])
+  }
+  return pairs
+})
 </script>
 
 <template>
@@ -61,26 +105,12 @@ const toggleTag = (tagId) => {
           <input v-model="form.key" type="text" required placeholder="e.g., common.welcome">
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>English</label>
-            <input v-model="form.en" type="text" placeholder="English value">
+        <div v-for="pair in localePairs" :key="pair[0].code" class="form-row">
+          <div v-for="locale in pair" :key="locale.code" class="form-group">
+            <label>{{ locale.name }} ({{ locale.code }})</label>
+            <input v-model="form[locale.code]" type="text" :placeholder="`${locale.name} value`">
           </div>
-          <div class="form-group">
-            <label>French</label>
-            <input v-model="form.fr" type="text" placeholder="French value">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Spanish</label>
-            <input v-model="form.es" type="text" placeholder="Spanish value">
-          </div>
-          <div class="form-group">
-            <label>German</label>
-            <input v-model="form.de" type="text" placeholder="German value">
-          </div>
+          <div v-if="!pair[1]" class="form-group"></div>
         </div>
 
         <div class="form-group">

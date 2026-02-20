@@ -101,6 +101,7 @@ const fetchData = () => {
   if (activeTab.value === 'translations') {
     fetchTranslations()
     fetchTags()
+    fetchLocales()
   }
   if (activeTab.value === 'locales') fetchLocales()
   if (activeTab.value === 'tags') fetchTags()
@@ -132,15 +133,20 @@ const openEditModal = (translation) => {
 const handleSaveTranslation = async (form) => {
   try {
     loading.value = true
+    
+    const localeMap = {}
+    locales.value.forEach(locale => {
+      localeMap[locale.code] = locale.id
+    })
+    
     if (editingTranslation.value) {
       const existing = translations.value.find(t => t.key === form.key)
       if (existing) {
         for (const id of existing.ids) {
           await api.deleteTranslation(id)
         }
-        const localeMap = { en: 1, fr: 2, es: 3, de: 4 }
-        for (const [lang, value] of Object.entries({ en: form.en, fr: form.fr, es: form.es, de: form.de })) {
-          if (value) {
+        for (const [lang, value] of Object.entries(form)) {
+          if (lang !== 'key' && lang !== 'tag_ids' && value) {
             await api.createTranslation({
               key: form.key,
               value: value,
@@ -151,9 +157,8 @@ const handleSaveTranslation = async (form) => {
         }
       }
     } else {
-      const localeMap = { en: 1, fr: 2, es: 3, de: 4 }
-      for (const [lang, value] of Object.entries({ en: form.en, fr: form.fr, es: form.es, de: form.de })) {
-        if (value) {
+      for (const [lang, value] of Object.entries(form)) {
+        if (lang !== 'key' && lang !== 'tag_ids' && value) {
           await api.createTranslation({
             key: form.key,
             value: value,
@@ -215,7 +220,8 @@ const handleDeleteTranslation = async (translation) => {
       <TranslationsSection 
         v-if="activeTab === 'translations'" 
         :translations="translations" 
-        :tags="tags" 
+        :tags="tags"
+        :locales="locales"
         @add="openAddModal"
         @edit="openEditModal"
         @delete="handleDeleteTranslation"
