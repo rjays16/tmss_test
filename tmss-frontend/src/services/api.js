@@ -29,7 +29,7 @@ class ApiService {
 
   // Translations
   getTranslations(page = 1) {
-    return this.request(`/v1/translations?page=${page}`)
+    return this.request(`/v1/translations?page=${page}&per_page=100`)
   }
 
   getTranslation(id) {
@@ -69,6 +69,10 @@ class ApiService {
   // Locales
   getLocales(page = 1) {
     return this.request(`/v1/locales?page=${page}`)
+  }
+
+  getAllLocales() {
+    return this.request('/v1/locales?per_page=100')
   }
 
   getLocale(id) {

@@ -63,7 +63,7 @@ const fetchTranslations = async () => {
 const fetchLocales = async () => {
   try {
     loading.value = true
-    const response = await api.getLocales()
+    const response = await api.getAllLocales()
     locales.value = response.data.map(l => ({
       id: l.id,
       code: l.code,
@@ -132,6 +132,10 @@ const handleSaveTranslation = async (form) => {
   try {
     loading.value = true
     
+    if (locales.value.length === 0) {
+      await fetchLocales()
+    }
+    
     const localeMap = {}
     locales.value.forEach(locale => {
       localeMap[locale.code] = locale.id
@@ -144,7 +148,7 @@ const handleSaveTranslation = async (form) => {
           await api.deleteTranslation(id)
         }
         for (const [lang, value] of Object.entries(form)) {
-          if (lang !== 'key' && lang !== 'tag_ids' && value) {
+          if (lang !== 'key' && lang !== 'tag_ids' && value && localeMap[lang]) {
             await api.createTranslation({
               key: form.key,
               value: value,
@@ -156,7 +160,7 @@ const handleSaveTranslation = async (form) => {
       }
     } else {
       for (const [lang, value] of Object.entries(form)) {
-        if (lang !== 'key' && lang !== 'tag_ids' && value) {
+        if (lang !== 'key' && lang !== 'tag_ids' && value && localeMap[lang]) {
           await api.createTranslation({
             key: form.key,
             value: value,
