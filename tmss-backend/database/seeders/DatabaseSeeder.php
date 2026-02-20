@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'api_token' => 'test_token_12345',
         ]);
     }
 }

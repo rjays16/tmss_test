@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+const API_TOKEN = import.meta.env.VITE_API_TOKEN || 'test_token_12345'
 
 class ApiService {
   async request(endpoint, options = {}) {
@@ -8,6 +9,7 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Authorization': `Bearer ${API_TOKEN}`,
         ...options.headers,
       },
       ...options,
