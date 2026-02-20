@@ -33,22 +33,20 @@ const fetchTranslations = async () => {
         grouped[key] = {
           ids: [],
           key: key,
-          en: '',
-          fr: '',
-          es: '',
-          de: '',
-          tags: []
+          tags: [],
+          tag_ids: []
         }
       }
       grouped[key].ids.push(t.id)
       const lang = t.locale?.code || t.locale
-      if (lang && ['en', 'fr', 'es', 'de'].includes(lang)) {
-        grouped[key][lang] = t.value
-      }
+      grouped[key][lang] = t.value
       if (t.tags) {
         for (const tag of t.tags) {
           if (!grouped[key].tags.includes(tag.name)) {
             grouped[key].tags.push(tag.name)
+          }
+          if (!grouped[key].tag_ids.includes(tag.id)) {
+            grouped[key].tag_ids.push(tag.id)
           }
         }
       }

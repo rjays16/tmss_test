@@ -42,11 +42,19 @@ const getInitialForm = () => {
 
 const form = ref(getInitialForm())
 
+const getTagIdsFromNames = (tagNames) => {
+  if (!tagNames || !Array.isArray(tagNames)) return []
+  return tagNames.map(name => {
+    const tag = props.tags.find(t => t.name === name)
+    return tag ? tag.id : null
+  }).filter(id => id !== null)
+}
+
 watch(() => props.translation, (t) => {
   if (t) {
     const newForm = {
       key: t.key || '',
-      tag_ids: t.tags || []
+      tag_ids: t.tag_ids || getTagIdsFromNames(t.tags)
     }
     availableLocales.value.forEach(locale => {
       newForm[locale.code] = t[locale.code] || ''
@@ -73,11 +81,15 @@ const handleSubmit = () => {
   emit('save', { ...form.value })
 }
 
+const isTagSelected = (tagId) => {
+  return form.value.tag_ids.includes(tagId)
+}
+
 const toggleTag = (tagId) => {
   const index = form.value.tag_ids.indexOf(tagId)
   if (index === -1) {
     form.value.tag_ids.push(tagId)
-  } else {
+  } else if (form.value.tag_ids.length > 1) {
     form.value.tag_ids.splice(index, 1)
   }
 }
@@ -121,14 +133,14 @@ const localePairs = computed(() => {
               :key="tag.id"
               type="button"
               class="tag-btn"
-              :class="{ selected: form.tag_ids.includes(tag.name) }"
+              :class="{ selected: isTagSelected(tag.id) }"
               :style="{ 
                 '--tag-color': tag.color,
-                backgroundColor: form.tag_ids.includes(tag.name) ? tag.color : 'transparent',
+                backgroundColor: isTagSelected(tag.id) ? tag.color : 'transparent',
                 borderColor: tag.color,
-                color: form.tag_ids.includes(tag.name) ? 'white' : tag.color
+                color: isTagSelected(tag.id) ? 'white' : tag.color
               }"
-              @click="toggleTag(tag.name)"
+              @click="toggleTag(tag.id)"
             >
               {{ tag.name }}
             </button>
