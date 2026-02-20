@@ -112,15 +112,15 @@ class TranslationController extends Controller
 
     public function search(Request $request): JsonResponse
     {
-        $query = $request->get('q', '');
+        $searchQuery = $request->get('q', '');
         $tag = $request->get('tag', '');
         $locale = $request->get('locale', '');
 
         $translations = Translation::select(['id', 'key', 'value', 'locale', 'locale_id'])
             ->with(['locale:id,code,name', 'tags:id,name,color'])
-            ->when($query, function ($q) use ($query) {
-                $q->where('key', 'like', "%{$query}%")
-                  ->orWhere('value', 'like', "%{$query}%");
+            ->when($searchQuery, function ($q) use ($searchQuery) {
+                $q->where('key', 'like', "%{$searchQuery}%")
+                  ->orWhere('value', 'like', "%{$searchQuery}%");
             })
             ->when($locale, function ($q) use ($locale) {
                 $q->where('locale', $locale);

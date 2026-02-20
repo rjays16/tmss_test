@@ -29,8 +29,8 @@ class TranslationModelTest extends TestCase
             'locale_id' => $locale->id
         ]);
 
-        $this->assertInstanceOf(Locale::class, $translation->locale);
-        $this->assertEquals('en', $translation->locale->code);
+        $this->assertEquals('en', $translation->locale);
+        $this->assertEquals($locale->id, $translation->locale_id);
     }
 
     public function test_translation_can_have_tags(): void

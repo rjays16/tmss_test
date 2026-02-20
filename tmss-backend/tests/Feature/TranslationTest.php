@@ -155,10 +155,22 @@ class TranslationTest extends TestCase
             'locale_id' => $locale->id
         ]);
 
+        Translation::create([
+            'key' => 'goodbye.world',
+            'value' => 'Goodbye World',
+            'locale' => 'en',
+            'locale_id' => $locale->id
+        ]);
+
         $response = $this->withHeader('Authorization', "Bearer {$token}")
             ->getJson('/api/v1/translations/search?q=hello');
 
         $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => ['id', 'key', 'value', 'locale']
+            ]
+        ]);
     }
 
     public function test_can_export_translations(): void

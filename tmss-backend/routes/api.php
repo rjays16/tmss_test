@@ -20,9 +20,9 @@ Route::prefix('v1')->group(function () {
     // Protected routes - require valid API token
     Route::middleware('api.token')->group(function () {
         // Translations
-        Route::apiResource('translations', TranslationController::class);
-        Route::get('translations/export/json', [TranslationController::class, 'exportJson']);
         Route::get('translations/search', [TranslationController::class, 'search']);
+        Route::get('translations/export/json', [TranslationController::class, 'exportJson']);
+        Route::apiResource('translations', TranslationController::class);
         
         // Locales
         Route::apiResource('locales', LocaleController::class);
