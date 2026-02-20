@@ -6,6 +6,7 @@ use App\Models\Translation;
 use App\Models\Locale;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class TranslationController extends Controller
 {
@@ -18,7 +19,12 @@ class TranslationController extends Controller
             $perPage = 10000;
         }
         
-        $translations = Translation::with(['locale', 'tags'])->paginate($perPage);
+        // Optimize: select only needed columns
+        $translations = Translation::select(['id', 'key', 'value', 'locale', 'locale_id'])
+            ->with(['locale:id,code,name', 'tags:id,name,color'])
+            ->orderBy('key')
+            ->paginate($perPage);
+            
         return response()->json($translations);
     }
 
@@ -45,6 +51,8 @@ class TranslationController extends Controller
             $translation->tags()->sync($validated['tag_ids']);
         }
 
+        Cache::forget('translations_export');
+        
         $translation->load(['locale', 'tags']);
 
         return response()->json($translation, 201);
@@ -85,6 +93,8 @@ class TranslationController extends Controller
             $translation->tags()->sync($validated['tag_ids']);
         }
 
+        Cache::forget('translations_export');
+        
         $translation->load(['locale', 'tags']);
 
         return response()->json($translation);
@@ -94,6 +104,8 @@ class TranslationController extends Controller
     {
         $translation = Translation::findOrFail($id);
         $translation->delete();
+        
+        Cache::forget('translations_export');
 
         return response()->json(['message' => 'Translation deleted successfully']);
     }
@@ -104,7 +116,8 @@ class TranslationController extends Controller
         $tag = $request->get('tag', '');
         $locale = $request->get('locale', '');
 
-        $translations = Translation::with(['locale', 'tags'])
+        $translations = Translation::select(['id', 'key', 'value', 'locale', 'locale_id'])
+            ->with(['locale:id,code,name', 'tags:id,name,color'])
             ->when($query, function ($q) use ($query) {
                 $q->where('key', 'like', "%{$query}%")
                   ->orWhere('value', 'like', "%{$query}%");
@@ -117,6 +130,7 @@ class TranslationController extends Controller
                     $t->where('name', $tag);
                 });
             })
+            ->orderBy('key')
             ->paginate(20);
 
         return response()->json($translations);
@@ -131,13 +145,24 @@ class TranslationController extends Controller
             $locales = explode(',', $locales);
         }
 
-        $translations = Translation::with('tags')
+        // Create cache key based on request params
+        $cacheKey = 'translations_export_' . md5(serialize($locales) . $tag);
+        
+        // Check cache first (cache for 5 minutes)
+        if ($tag === '' && Cache::has($cacheKey)) {
+            return response()->json(Cache::get($cacheKey));
+        }
+
+        // Optimize: use select and avoid loading all relations
+        $translations = Translation::select(['id', 'key', 'value', 'locale'])
+            ->with(['tags:id,name'])
             ->whereIn('locale', $locales)
             ->when($tag, function ($q) use ($tag) {
                 $q->whereHas('tags', function ($t) use ($tag) {
                     $t->where('name', $tag);
                 });
             })
+            ->orderBy('key')
             ->get();
 
         $result = [];
@@ -151,6 +176,11 @@ class TranslationController extends Controller
             if ($tag === '' && $t->tags->isNotEmpty()) {
                 $result[$key]['_tags'] = $t->tags->pluck('name')->toArray();
             }
+        }
+
+        // Cache the result for 5 minutes (only if no tag filter)
+        if ($tag === '') {
+            Cache::put($cacheKey, $result, 300);
         }
 
         return response()->json($result);
