@@ -9,9 +9,16 @@ use Illuminate\Http\JsonResponse;
 
 class TranslationController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $translations = Translation::with(['locale', 'tags'])->paginate(20);
+        $perPage = $request->get('per_page', 1000);
+        
+        // Cap at 10000 to prevent memory issues
+        if ($perPage > 10000) {
+            $perPage = 10000;
+        }
+        
+        $translations = Translation::with(['locale', 'tags'])->paginate($perPage);
         return response()->json($translations);
     }
 

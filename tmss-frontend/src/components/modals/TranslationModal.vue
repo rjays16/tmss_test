@@ -18,15 +18,23 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save'])
 
 const availableLocales = computed(() => {
-  if (props.locales && props.locales.length > 0) {
-    return props.locales
-  }
-  return [
+  const defaultLocales = [
     { code: 'en', name: 'English' },
     { code: 'fr', name: 'French' },
     { code: 'es', name: 'Spanish' },
-    { code: 'de', name: 'German' }
+    { code: 'de', name: 'German' },
+    { code: 'it', name: 'Italian' },
+    { code: 'pt', name: 'Portuguese' },
+    { code: 'zh', name: 'Chinese' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'ko', name: 'Korean' },
+    { code: 'ar', name: 'Arabic' }
   ]
+  
+  if (props.locales && props.locales.length > 0) {
+    return props.locales
+  }
+  return defaultLocales
 })
 
 const getInitialForm = () => {
@@ -64,6 +72,19 @@ watch(() => props.translation, (t) => {
     form.value = getInitialForm()
   }
 }, { immediate: true })
+
+watch(availableLocales, () => {
+  if (props.translation) {
+    const newForm = {
+      key: props.translation.key || '',
+      tag_ids: props.translation.tag_ids || getTagIdsFromNames(props.translation.tags)
+    }
+    availableLocales.value.forEach(locale => {
+      newForm[locale.code] = props.translation[locale.code] || ''
+    })
+    form.value = newForm
+  }
+}, { deep: true })
 
 watch(() => props.show, (isVisible) => {
   if (!isVisible) {

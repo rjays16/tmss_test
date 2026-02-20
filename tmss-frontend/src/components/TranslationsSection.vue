@@ -22,15 +22,23 @@ const searchQuery = ref('')
 const selectedTag = ref('')
 const showLanguageSelector = ref(false)
 
-const defaultLocales = ['en', 'fr', 'es', 'de']
 const availableLocales = computed(() => {
-  if (props.locales.length > 0) {
+  if (props.locales && props.locales.length > 0) {
     return props.locales.map(l => l.code)
   }
-  return defaultLocales
+  return ['en', 'fr', 'es', 'de', 'it', 'pt', 'zh', 'ja', 'ko', 'ar']
 })
 
-const selectedLocales = ref([...availableLocales.value])
+const selectedLocales = ref(['en', 'fr', 'es', 'de'])
+
+const toggleLocale = (locale) => {
+  const index = selectedLocales.value.indexOf(locale)
+  if (index === -1) {
+    selectedLocales.value.push(locale)
+  } else if (selectedLocales.value.length > 1) {
+    selectedLocales.value.splice(index, 1)
+  }
+}
 
 const localeNames = {
   en: 'English',
@@ -62,15 +70,6 @@ const filteredTranslations = computed(() => {
 const getTagColor = (tagName) => {
   const tag = props.tags.find(t => t.name === tagName)
   return tag?.color || '#6B7280'
-}
-
-const toggleLocale = (locale) => {
-  const index = selectedLocales.value.indexOf(locale)
-  if (index === -1) {
-    selectedLocales.value.push(locale)
-  } else if (selectedLocales.value.length > 1) {
-    selectedLocales.value.splice(index, 1)
-  }
 }
 
 const isLocaleSelected = (locale) => {

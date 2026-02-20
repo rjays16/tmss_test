@@ -18,8 +18,17 @@ class DatabaseSeeder extends Seeder
         $this->call([
             LocaleSeeder::class,
             TagSeeder::class,
-            TranslationSeeder::class,
         ]);
+
+        $useMassive = env('SEED_MASSIVE', false);
+        
+        if ($useMassive) {
+            $this->command->info('Running massive translation seeder (100k+)...');
+            $this->call(MassiveTranslationSeeder::class);
+        } else {
+            $this->command->info('Running standard translation seeder...');
+            $this->call(TranslationSeeder::class);
+        }
 
         User::factory()->create([
             'name' => 'Test User',

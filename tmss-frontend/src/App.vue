@@ -22,6 +22,10 @@ const editingTranslation = ref(null)
 
 const fetchTranslations = async () => {
   try {
+    if (locales.value.length === 0) {
+      await fetchLocales()
+    }
+    
     loading.value = true
     const response = await api.getTranslations()
     const allTranslations = response.data
@@ -38,8 +42,17 @@ const fetchTranslations = async () => {
         }
       }
       grouped[key].ids.push(t.id)
-      const lang = t.locale?.code || t.locale
-      grouped[key][lang] = t.value
+      
+      
+      let lang = t.locale?.code
+      if (!lang) {
+        lang = t.locale
+      }
+      
+      
+      if (lang) {
+        grouped[key][lang] = t.value
+      }
       if (t.tags) {
         for (const tag of t.tags) {
           if (!grouped[key].tags.includes(tag.name)) {
@@ -141,19 +154,24 @@ const handleSaveTranslation = async (form) => {
       localeMap[locale.code] = locale.id
     })
     
+    // tag_ids - ensure they are numbers
+    const TagIds = form.tag_ids ? form.tag_ids.map(id => Number(id)).filter(id => id > 0) : []
+    
     if (editingTranslation.value) {
       const existing = translations.value.find(t => t.key === form.key)
       if (existing) {
+        // Delete existing translations
         for (const id of existing.ids) {
           await api.deleteTranslation(id)
         }
+        // Create new translations for each locale
         for (const [lang, value] of Object.entries(form)) {
           if (lang !== 'key' && lang !== 'tag_ids' && value && localeMap[lang]) {
             await api.createTranslation({
               key: form.key,
               value: value,
               locale_id: localeMap[lang],
-              tag_ids: form.tag_ids
+              tag_ids: TagIds
             })
           }
         }
@@ -165,7 +183,7 @@ const handleSaveTranslation = async (form) => {
             key: form.key,
             value: value,
             locale_id: localeMap[lang],
-            tag_ids: form.tag_ids
+            tag_ids: TagIds
           })
         }
       }

@@ -29,7 +29,7 @@ class ApiService {
 
   // Translations
   getTranslations(page = 1) {
-    return this.request(`/v1/translations?page=${page}&per_page=100`)
+    return this.request(`/v1/translations?page=${page}&per_page=10000`)
   }
 
   getTranslation(id) {
