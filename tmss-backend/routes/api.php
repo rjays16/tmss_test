@@ -17,11 +17,14 @@ Route::prefix('v1')->group(function () {
         return response($docs, 200)->header('Content-Type', 'application/json');
     });
     
+    // Public CDN endpoint
+    Route::get('translations/export/json', [TranslationController::class, 'exportJson']);
+    Route::get('translations/export/cdn', [TranslationController::class, 'exportJsonCdn']);
+    
     // Protected routes - require valid API token
     Route::middleware('api.token')->group(function () {
         // Translations
         Route::get('translations/search', [TranslationController::class, 'search']);
-        Route::get('translations/export/json', [TranslationController::class, 'exportJson']);
         Route::apiResource('translations', TranslationController::class);
         
         // Locales

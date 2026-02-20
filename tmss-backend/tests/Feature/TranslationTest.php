@@ -198,6 +198,56 @@ class TranslationTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_export_endpoint_has_cdn_headers(): void
+    {
+        $locale = Locale::create([
+            'code' => 'en',
+            'name' => 'English',
+            'native_name' => 'English',
+            'is_active' => true,
+            'order' => 1
+        ]);
+
+        Translation::create([
+            'key' => 'test.key',
+            'value' => 'Test Value',
+            'locale' => 'en',
+            'locale_id' => $locale->id
+        ]);
+
+        $response = $this->getJson('/api/v1/translations/export/json?locales=en');
+
+        $response->assertStatus(200);
+        $response->assertHeader('X-Content-Type-Options', 'test-backend-content');
+        $response->assertHeader('Vary');
+        $response->assertHeader('Cache-Control');
+    }
+
+    public function test_cdn_endpoint_has_proper_headers(): void
+    {
+        $locale = Locale::create([
+            'code' => 'en',
+            'name' => 'English',
+            'native_name' => 'English',
+            'is_active' => true,
+            'order' => 1
+        ]);
+
+        Translation::create([
+            'key' => 'test.key',
+            'value' => 'Test Value',
+            'locale' => 'en',
+            'locale_id' => $locale->id
+        ]);
+
+        $response = $this->getJson('/api/v1/translations/export/cdn?locales=en');
+
+        $response->assertStatus(200);
+        $response->assertHeader('X-Content-Type-Options', 'test-backend-content');
+        $response->assertHeader('X-CDN-Cache');
+        $response->assertHeader('Cache-Control');
+    }
+
     public function test_requires_authentication(): void
     {
         $response = $this->getJson('/api/v1/translations');
